@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cadeau Ticoti</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(180deg,#a58bff,#7c5cff 40%,#5a3ce0);min-height:100vh;color:#1f1d2b}
+.w{max-width:720px;margin:0 auto;padding:32px 20px 60px}h1{color:#fff;font-size:34px;margin:8px 0 4px}.sub{color:#ffffffd9;margin:0 0 24px}
+.c{background:#fff;border-radius:24px;padding:22px 24px;margin:0 0 16px;box-shadow:0 8px 24px #2b1d5a33}h2{font-size:19px;margin:0 0 8px;color:#5a3ce0}
+a{color:#7c5cff}nav a{color:#fff;margin-right:16px;font-weight:600;text-decoration:none}
+.s{font-size:13px;color:#ffffffb3;text-align:center}
+.btn{display:block;text-align:center;text-decoration:none;font-weight:800;font-size:16px;border-radius:999px;padding:14px 20px;margin:10px 0;color:#fff;background:#7c5cff}
+.btn.alt{background:#1f1d2b}
+.btn.ghost{background:#f3eeff;color:#5a3ce0}
+.muted{font-size:14px;color:#5a5a6e;line-height:1.45}
+.err{color:#e5484d;font-weight:700}
+</style>
+</head>
+<body>
+<div class="w">
+<nav><a href="/">Ticoti</a><a href="/confidentialite.html">Confidentialité</a><a href="/support.html">Assistance</a></nav>
+<h1>🎁 Cadeau Ticoti</h1>
+<p class="sub" id="sub">On t’offre un compte à rebours…</p>
+<div class="c" id="box">
+  <h2 id="title">Ouverture…</h2>
+  <p class="muted" id="msg">On essaie d’ouvrir l’appli Ticoti.</p>
+  <a class="btn" id="openApp" href="#">Ouvrir Ticoti</a>
+  <a class="btn alt" id="store" href="#" style="display:none">Installer Ticoti</a>
+  <a class="btn ghost" id="copy" href="#" style="display:none">Copier le lien</a>
+  <p class="muted" id="hint" style="margin-top:12px"></p>
+</div>
+<p class="s">Ticoti · <a style="color:#fff" href="mailto:contact@ticoti.fr">contact@ticoti.fr</a></p>
+</div>
+<script>
+(function () {
+  var APP_STORE = 'https://apps.apple.com/fr/app/id6825375494';
+  var PLAY_STORE = 'https://play.google.com/store/apps/details?id=com.lejohjoh.ticoti';
+  var params = new URLSearchParams(location.search);
+  var code = params.get('c') || '';
+  // fallback path /g/<code>
+  if (!code) {
+    var m = location.pathname.match(/\/g\/([A-Za-z0-9\-_]+)/);
+    if (m) code = m[1];
+  }
+  // also accept #c= or legacy hash forms
+  if (!code && location.hash) {
+    var h = location.hash.replace(/^#/, '');
+    if (h.indexOf('c=') === 0) code = h.slice(2);
+    else if (/^[A-Za-z0-9\-_]{40,}$/.test(h)) code = h;
+  }
+  code = (code || '').replace(/[^A-Za-z0-9\-_]/g, '');
+
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  var isAndroid = /Android/i.test(ua);
+  var storeUrl = isIOS ? APP_STORE : (isAndroid ? PLAY_STORE : APP_STORE);
+  var storeLabel = isIOS ? 'Installer sur l’App Store' : (isAndroid ? 'Installer sur le Play Store' : 'Installer Ticoti');
+
+  var title = document.getElementById('title');
+  var msg = document.getElementById('msg');
+  var hint = document.getElementById('hint');
+  var openApp = document.getElementById('openApp');
+  var store = document.getElementById('store');
+  var copy = document.getElementById('copy');
+
+  if (!code || code.length < 40) {
+    title.textContent = 'Lien incomplet';
+    msg.innerHTML = 'Ce lien cadeau est incomplet ou abîmé. Demande à la personne de te le renvoyer, ou ouvre Ticoti et touche « J’ai reçu un cadeau » pour coller le message.';
+    openApp.style.display = 'none';
+    store.style.display = 'block';
+    store.href = storeUrl;
+    store.textContent = storeLabel;
+    // also show the other store on desktop
+    if (!isIOS && !isAndroid) {
+      store.href = PLAY_STORE;
+      store.textContent = 'Android — Play Store';
+      var a2 = document.createElement('a');
+      a2.className = 'btn alt';
+      a2.href = APP_STORE;
+      a2.textContent = 'iPhone — App Store';
+      store.parentNode.insertBefore(a2, store.nextSibling);
+    }
+    return;
+  }
+
+  var deep = 'ticoti://g/' + code;
+  var httpsLink = location.origin + '/g/?c=' + code;
+  openApp.href = deep;
+  store.href = storeUrl;
+  store.textContent = storeLabel;
+  store.style.display = 'block';
+  copy.style.display = 'block';
+  hint.textContent = 'Si l’appli ne s’ouvre pas : installe Ticoti, puis reviens sur ce lien, ou copie le message dans Ticoti → « J’ai reçu un cadeau ».';
+
+  copy.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(httpsLink).then(function () {
+        copy.textContent = 'Lien copié !';
+      }).catch(function () {
+        prompt('Copie ce lien :', httpsLink);
+      });
+    } else {
+      prompt('Copie ce lien :', httpsLink);
+    }
+  });
+
+  // tenter d’ouvrir l’app tout de suite
+  title.textContent = 'Ouverture de Ticoti…';
+  msg.textContent = 'Si rien ne se passe, touche « Ouvrir Ticoti » ou installe l’appli.';
+  try {
+    // iframe trick + location (iOS / Android)
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = deep;
+    document.body.appendChild(iframe);
+    setTimeout(function () { try { document.body.removeChild(iframe); } catch (e) {} }, 1500);
+  } catch (e) {}
+  setTimeout(function () {
+    // last attempt via top navigation (may leave the page if app opens)
+    window.location.href = deep;
+  }, 250);
+})();
+</script>
+</body>
+</html>
